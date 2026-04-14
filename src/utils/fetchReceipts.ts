@@ -1,4 +1,4 @@
-import { useReceiptsStore } from '../store/receiptsStore'
+import { useReceiptsStore } from '../store/receiptsStore.js'
 
 export async function fetchReceipts() {
   const receiptsStore = useReceiptsStore()
