@@ -35,6 +35,7 @@
     <div v-if="modalOpen" class="modal-bg" @click="closeModal">
       <div class="modal-img-wrapper" @click.stop>
         <img v-if="modalImg" :src="modalImg" alt="Kvitto" class="modal-img" />
+        <div v-else-if="modalError" class="modal-loader" style="color: #e74c3c; font-weight: bold;">{{ modalError }}</div>
         <div v-else class="modal-loader">Laddar bild...</div>
         <button class="modal-close" @click="closeModal">
           <SquareX :size="20" style="margin-right: 10px" />
@@ -50,15 +51,22 @@ import { ref } from 'vue'
 import { Upload, ReceiptText, SquareX } from '@lucide/vue'
 const modalOpen = ref(false)
 const modalImg = ref<string | null>(null)
+const modalError = ref<string | null>(null)
 async function showReceipt(id: number) {
   modalOpen.value = true
   modalImg.value = null
+  modalError.value = null
   try {
     const res = await fetch(`/api/receipt-image?id=${id}`)
+    if (res.status === 404) {
+      modalError.value = 'Kvitto-bild hittades inte (404). Det kan bero på att bilden är borttagen eller aldrig laddades upp.'
+      return
+    }
     if (!res.ok) throw new Error('Kunde inte hämta bild')
     const data = await res.json()
     modalImg.value = `data:image/jpeg;base64,${data.imageBase64}`
-  } catch {
+  } catch (e: any) {
+    modalError.value = e.message || 'Fel vid hämtning av bild.'
     modalImg.value = null
   }
 }

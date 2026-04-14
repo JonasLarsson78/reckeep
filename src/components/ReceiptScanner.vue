@@ -77,6 +77,25 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Camera } from '@lucide/vue'
 
+// OpenCV.js laddningsstatus
+const cvReady = ref(false)
+function waitForOpenCV() {
+  return new Promise<void>((resolve) => {
+    if ((window as any).cv && (window as any).cv.imread) {
+      cvReady.value = true
+      resolve()
+    } else {
+      const check = setInterval(() => {
+        if ((window as any).cv && (window as any).cv.imread) {
+          cvReady.value = true
+          clearInterval(check)
+          resolve()
+        }
+      }, 100)
+    }
+  })
+}
+
 const router = useRouter()
 
 const emit = defineEmits(['image-selected'])
@@ -101,8 +120,96 @@ function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.files && target.files[0]) {
     imageFile.value = target.files[0]
-    imageUrl.value = URL.createObjectURL(target.files[0])
+    // Auto-crop kvitto
+    autoCropReceipt(target.files[0])
   }
+}
+
+async function autoCropReceipt(file: File) {
+  await waitForOpenCV()
+  const img = new Image()
+  img.onload = async () => {
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width
+    canvas.height = img.height
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0)
+    // Läs in bilden till OpenCV
+    const cv = (window as any).cv
+    let src = cv.imread(canvas)
+    let dst = new cv.Mat()
+    // Förbehandling: gråskala & blur
+    cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0)
+    cv.GaussianBlur(src, src, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT)
+    // Kantdetektering
+    cv.Canny(src, dst, 50, 150)
+    // Hitta konturer
+    let contours = new cv.MatVector()
+    let hierarchy = new cv.Mat()
+    cv.findContours(
+      dst,
+      contours,
+      hierarchy,
+      cv.RETR_EXTERNAL,
+      cv.CHAIN_APPROX_SIMPLE
+    )
+    // Hitta största konturen (förmodat kvitto)
+    let maxArea = 0
+    let maxContour = null
+    for (let i = 0; i < contours.size(); i++) {
+      let cnt = contours.get(i)
+      let area = cv.contourArea(cnt)
+      if (area > maxArea) {
+        maxArea = area
+        maxContour = cnt
+      }
+    }
+    let croppedDataUrl = ''
+    if (maxContour && maxArea > 10000) {
+      let rect = cv.boundingRect(maxContour)
+      // Beskär till bounding rect
+      const cropCanvas = document.createElement('canvas')
+      cropCanvas.width = rect.width
+      cropCanvas.height = rect.height
+      const cropCtx = cropCanvas.getContext('2d')!
+      cropCtx.drawImage(
+        img,
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        0,
+        0,
+        rect.width,
+        rect.height
+      )
+      croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95)
+      // Sätt preview och fil
+      imageUrl.value = croppedDataUrl
+      // Konvertera till File-objekt
+      const arr = croppedDataUrl.split(',')
+      const mimeMatch = arr[0].match(/:(.*?);/)
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+      const bstr = atob(arr[1])
+      let n = bstr.length
+      const u8arr = new Uint8Array(n)
+      while (n--) u8arr[n] = bstr.charCodeAt(n)
+      imageFile.value = new File(
+        [u8arr],
+        file.name.replace(/\.[^.]+$/, '') + '-cropped.jpg',
+        { type: mime }
+      )
+    } else {
+      // Om ingen tydlig kontur hittas, visa original
+      imageUrl.value = canvas.toDataURL('image/jpeg', 0.95)
+      imageFile.value = file
+    }
+    src.delete()
+    dst.delete()
+    contours.delete()
+    hierarchy.delete()
+  }
+  img.src = URL.createObjectURL(file)
 }
 
 async function emitImage() {
