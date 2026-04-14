@@ -1,5 +1,12 @@
 <template>
   <div class="home-view">
+    <button
+      class="logout-btn"
+      @click="logout"
+      style="float: right; margin: 1rem"
+    >
+      Logga ut
+    </button>
     <img
       src="/logo.png"
       alt="RecKeep Logo"
@@ -53,8 +60,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useAuthStore } from '../store/authStore'
 import { Upload, ReceiptText, SquareX } from '@lucide/vue'
+
+const authStore = useAuthStore()
+onMounted(() => {
+  const token = localStorage.getItem('token')
+  if (token) authStore.setToken(token)
+})
+
+// Kör fetchReceipts när token är satt
+watch(
+  () => authStore.token,
+  (token) => {
+    if (token) {
+      // Importera och kör fetchReceipts här
+      import('../utils/fetchReceipts').then((mod) => mod.fetchReceipts())
+    }
+  },
+  { immediate: true }
+)
+
+function logout() {
+  authStore.clearToken()
+  router.push('/login')
+}
 const modalOpen = ref(false)
 const modalImg = ref<string | null>(null)
 const modalError = ref<string | null>(null)
