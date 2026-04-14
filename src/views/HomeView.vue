@@ -1,7 +1,8 @@
 <template>
   <div class="home-view">
     <button class="main-btn" @click="goToUpload" style="margin-bottom: 2rem">
-      Ladda upp nytt kvitto
+      <Upload :size="20" style="margin-right: 10px" />
+      <span>Ladda upp nytt kvitto</span>
     </button>
     <div class="receipts-list" v-if="receipts.length">
       <h3>Uppladdade kvitton</h3>
@@ -12,7 +13,10 @@
           @click="showReceipt(receipt.id)"
           style="cursor: pointer"
         >
-          <strong>{{ receipt.name }}</strong>
+          <span>
+            <ReceiptText :size="20" style="margin-right: 10px" />
+            <strong>{{ receipt.name }}</strong>
+          </span>
           <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{
             formatDate(receipt.created_at)
           }}</span>
@@ -23,7 +27,10 @@
       <div class="modal-img-wrapper" @click.stop>
         <img v-if="modalImg" :src="modalImg" alt="Kvitto" class="modal-img" />
         <div v-else class="modal-loader">Laddar bild...</div>
-        <button class="modal-close" @click="closeModal">Stäng</button>
+        <button class="modal-close" @click="closeModal">
+          <SquareX :size="20" style="margin-right: 10px" />
+          <span>Stäng</span>
+        </button>
       </div>
     </div>
   </div>
@@ -31,6 +38,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Upload, ReceiptText, SquareX } from '@lucide/vue'
 const modalOpen = ref(false)
 const modalImg = ref<string | null>(null)
 async function showReceipt(id: number) {
@@ -130,6 +138,9 @@ function formatDate(dateStr: string) {
   padding: 2rem;
 }
 .modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 1.5rem;
   background: #222;
   color: #fff;

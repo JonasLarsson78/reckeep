@@ -1,26 +1,21 @@
 <template>
   <div class="receipt-bg">
     <div class="receipt-scanner">
-      <button class="main-btn" @click="goBack" style="margin-bottom: 2rem">
+      <button
+        class="main-btn"
+        @click="goBack"
+        style="
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5em;
+        "
+      >
+        <ArrowLeft :size="20" />
         Tillbaka till lista
       </button>
       <div class="icon-wrapper">
-        <svg
-          width="56"
-          height="56"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="#00c6ff"
-          stroke-width="2.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <rect x="3" y="4" width="18" height="16" rx="3" />
-          <path d="M8 2v4" />
-          <path d="M16 2v4" />
-          <circle cx="12" cy="13" r="3.2" />
-          <path d="M12 10.5v1.5l1 1" />
-        </svg>
+        <Camera :size="50" color="#00c6ff" />
       </div>
       <h2 class="title">Skanna kvitto</h2>
       <p class="desc">
@@ -41,16 +36,10 @@
         placeholder="Namn på kvittot"
         class="name-input"
         :disabled="loading"
-        style="
-          margin-bottom: 1rem;
-          width: 100%;
-          padding: 0.5rem;
-          border-radius: 8px;
-          border: 1px solid #ccc;
-        "
       />
       <button class="main-btn" @click="triggerFileInput" :disabled="loading">
-        <span v-if="!imageFile">📷 Välj eller ta bild</span>
+        <Camera :size="20" style="margin-right: 10px" />
+        <span v-if="!imageFile"> Välj eller ta bild</span>
         <span v-else>Byt bild</span>
       </button>
       <div v-if="imageUrl && !uploadSuccess" class="image-preview-wrapper">
@@ -86,6 +75,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ArrowLeft, Camera } from '@lucide/vue'
 
 const router = useRouter()
 
@@ -260,7 +250,9 @@ body {
     margin-bottom: 0.5rem;
     margin-left: auto;
     margin-right: auto;
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     letter-spacing: 0.01em;
     margin-bottom: 0.5rem;
   }
@@ -291,6 +283,22 @@ body {
   .upload-btn:active {
     background: #1565c0;
     transform: scale(0.97);
+  }
+
+  .name-input {
+    width: 100%;
+    border: none;
+    font-size: 20px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    transition: background 0.2s;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  .name-input:focus {
+    outline: 2px solid #00c6ff;
   }
   .image-preview-wrapper {
     width: 100%;
