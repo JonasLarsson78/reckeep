@@ -14,9 +14,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!id) return res.status(400).json({ error: 'Missing id' })
   try {
     const conn = await mysql.createConnection(dbConfig)
-    const [rows] = await conn.execute('SELECT image_blob FROM receipts WHERE id = ?', [id])
+    const [rows] = await conn.execute(
+      'SELECT image_blob FROM receipts WHERE id = ?',
+      [id]
+    )
     await conn.end()
-    if (!Array.isArray(rows) || rows.length === 0) return res.status(404).json({ error: 'Not found' })
+    if (!Array.isArray(rows) || rows.length === 0)
+      return res.status(404).json({ error: 'Not found' })
     const imageBlob = rows[0].image_blob
     const base64 = Buffer.from(imageBlob).toString('base64')
     res.setHeader('Content-Type', 'application/json')

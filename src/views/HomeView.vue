@@ -6,9 +6,16 @@
     <div class="receipts-list" v-if="receipts.length">
       <h3>Uppladdade kvitton</h3>
       <ul>
-        <li v-for="receipt in receipts" :key="receipt.id" @click="showReceipt(receipt.id)" style="cursor:pointer;">
+        <li
+          v-for="receipt in receipts"
+          :key="receipt.id"
+          @click="showReceipt(receipt.id)"
+          style="cursor: pointer"
+        >
           <strong>{{ receipt.name }}</strong>
-          <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{ formatDate(receipt.created_at) }}</span>
+          <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{
+            formatDate(receipt.created_at)
+          }}</span>
         </li>
       </ul>
     </div>
@@ -25,7 +32,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 const modalOpen = ref(false)
-const modalImg = ref<string|null>(null)
+const modalImg = ref<string | null>(null)
 async function showReceipt(id: number) {
   modalOpen.value = true
   modalImg.value = null
@@ -96,7 +103,7 @@ function formatDate(dateStr: string) {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -115,7 +122,7 @@ function formatDate(dateStr: string) {
   max-width: 90vw;
   max-height: 80vh;
   border-radius: 14px;
-  box-shadow: 0 4px 32px rgba(0,0,0,0.25);
+  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.25);
 }
 .modal-loader {
   color: #fff;
@@ -132,7 +139,7 @@ function formatDate(dateStr: string) {
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   transition: background 0.2s;
 }
 .modal-close:hover {
