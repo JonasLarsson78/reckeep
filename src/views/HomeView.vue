@@ -6,18 +6,42 @@
     <div class="receipts-list" v-if="receipts.length">
       <h3>Uppladdade kvitton</h3>
       <ul>
-        <li v-for="receipt in receipts" :key="receipt.id">
+        <li v-for="receipt in receipts" :key="receipt.id" @click="showReceipt(receipt.id)" style="cursor:pointer;">
           <strong>{{ receipt.name }}</strong>
-          <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{
-            formatDate(receipt.created_at)
-          }}</span>
+          <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{ formatDate(receipt.created_at) }}</span>
         </li>
       </ul>
+    </div>
+    <div v-if="modalOpen" class="modal-bg" @click="closeModal">
+      <div class="modal-img-wrapper" @click.stop>
+        <img v-if="modalImg" :src="modalImg" alt="Kvitto" class="modal-img" />
+        <div v-else class="modal-loader">Laddar bild...</div>
+        <button class="modal-close" @click="closeModal">Stäng</button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue'
+const modalOpen = ref(false)
+const modalImg = ref<string|null>(null)
+async function showReceipt(id: number) {
+  modalOpen.value = true
+  modalImg.value = null
+  try {
+    const res = await fetch(`/api/receipt-image?id=${id}`)
+    if (!res.ok) throw new Error('Kunde inte hämta bild')
+    const data = await res.json()
+    modalImg.value = `data:image/jpeg;base64,${data.imageBase64}`
+  } catch {
+    modalImg.value = null
+  }
+}
+function closeModal() {
+  modalOpen.value = false
+  modalImg.value = null
+}
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -66,6 +90,54 @@ function formatDate(dateStr: string) {
 </script>
 
 <style lang="scss" scoped>
+.modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-img-wrapper {
+  position: relative;
+  max-width: 95vw;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.modal-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  border-radius: 14px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.25);
+}
+.modal-loader {
+  color: #fff;
+  font-size: 1.2rem;
+  padding: 2rem;
+}
+.modal-close {
+  margin-top: 1.5rem;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  transition: background 0.2s;
+}
+.modal-close:hover {
+  background: #444;
+}
 body,
 html {
   margin: 0;
