@@ -1,6 +1,9 @@
 <template>
   <div class="receipt-bg">
     <div class="receipt-scanner">
+      <button class="main-btn" @click="goBack" style="margin-bottom: 2rem">
+        Tillbaka till lista
+      </button>
       <div class="icon-wrapper">
         <svg
           width="56"
@@ -32,6 +35,20 @@
         :disabled="loading"
         style="display: none"
       />
+      <input
+        v-model="receiptName"
+        type="text"
+        placeholder="Namn på kvittot"
+        class="name-input"
+        :disabled="loading"
+        style="
+          margin-bottom: 1rem;
+          width: 100%;
+          padding: 0.5rem;
+          border-radius: 8px;
+          border: 1px solid #ccc;
+        "
+      />
       <button class="main-btn" @click="triggerFileInput" :disabled="loading">
         <span v-if="!imageFile">📷 Välj eller ta bild</span>
         <span v-else>Byt bild</span>
@@ -61,58 +78,55 @@
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue'
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-export default defineComponent({
-  name: 'ReceiptScanner',
-  emits: ['image-selected'],
-  setup(_, { emit }) {
-    const imageFile = ref<File | null>(null)
-    const imageUrl = ref<string | null>(null)
-    const loading = ref(false)
-    const uploadSuccess = ref(false)
-    const fileInput = ref<HTMLInputElement | null>(null)
+const router = useRouter()
 
-    function triggerFileInput() {
-      fileInput.value?.click()
-    }
+const emit = defineEmits(['image-selected'])
 
-    function onFileChange(e: Event) {
-      uploadSuccess.value = false
-      const target = e.target as HTMLInputElement
-      if (target.files && target.files[0]) {
-        imageFile.value = target.files[0]
-        imageUrl.value = URL.createObjectURL(target.files[0])
-      }
-    }
+const imageFile = ref<File | null>(null)
+const imageUrl = ref<string | null>(null)
+const loading = ref(false)
+const uploadSuccess = ref(false)
+const fileInput = ref<HTMLInputElement | null>(null)
+const receiptName = ref('')
 
-    async function emitImage() {
-      if (imageFile.value) {
-        loading.value = true
-        emit('image-selected', imageFile.value)
-        // Vänta på att HomeView hanterar uppladdning, simulera delay för loader
-        setTimeout(() => {
-          loading.value = false
-          uploadSuccess.value = true
-          imageFile.value = null
-          imageUrl.value = null
-        }, 2000)
-      }
-    }
+function triggerFileInput() {
+  fileInput.value?.click()
+}
 
-    return {
-      imageFile,
-      imageUrl,
-      onFileChange,
-      emitImage,
-      loading,
-      uploadSuccess,
-      fileInput,
-      triggerFileInput,
-    }
-  },
-})
+function goBack() {
+  router.push('/')
+}
+
+function onFileChange(e: Event) {
+  uploadSuccess.value = false
+  const target = e.target as HTMLInputElement
+  if (target.files && target.files[0]) {
+    imageFile.value = target.files[0]
+    imageUrl.value = URL.createObjectURL(target.files[0])
+  }
+}
+
+async function emitImage() {
+  if (imageFile.value && receiptName.value.trim()) {
+    loading.value = true
+    emit('image-selected', {
+      file: imageFile.value,
+      name: receiptName.value,
+    })
+    // Vänta på att HomeView hanterar uppladdning, simulera delay för loader
+    setTimeout(() => {
+      loading.value = false
+      uploadSuccess.value = true
+      imageFile.value = null
+      imageUrl.value = null
+      receiptName.value = ''
+    }, 2000)
+  }
+}
 </script>
 
 <style scoped lang="scss">

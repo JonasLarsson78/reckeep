@@ -1,50 +1,67 @@
 <template>
   <div class="home-view">
-    <ReceiptScanner @image-selected="onImageSelected" />
-    <div v-if="loading" class="status">Laddar upp kvitto...</div>
-    <div v-if="error" class="status error">{{ error }}</div>
-    <div v-if="success" class="status success">Kvitto sparat!</div>
+    <button class="main-btn" @click="goToUpload" style="margin-bottom: 2rem">
+      Ladda upp nytt kvitto
+    </button>
+    <div class="receipts-list" v-if="receipts.length">
+      <h3>Uppladdade kvitton</h3>
+      <ul>
+        <li v-for="receipt in receipts" :key="receipt.id">
+          <strong>{{ receipt.name }}</strong>
+          <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{
+            formatDate(receipt.created_at)
+          }}</span>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import ReceiptScanner from '../components/ReceiptScanner.vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useReceiptsStore } from '../store/receiptsStore'
 
-const loading = ref(false)
-const error = ref('')
-const success = ref(false)
+const router = useRouter()
+const receiptsStore = useReceiptsStore()
+const { receipts, loaded } = storeToRefs(receiptsStore)
 
-async function onImageSelected(file: File) {
-  error.value = ''
-  success.value = false
-  loading.value = true
-  try {
-    const base64 = await fileToBase64(file)
-    const res = await fetch('/api/scan-receipt', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ imageBase64: base64.split(',')[1] }),
-    })
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.error || 'Fel vid uppladdning')
-    }
-    success.value = true
-  } catch (e: any) {
-    error.value = e.message || 'Något gick fel'
-  } finally {
-    loading.value = false
-  }
+function goToUpload() {
+  router.push('/upload')
 }
 
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
-  })
+async function fetchReceipts() {
+  try {
+    const res = await fetch('/api/receipts')
+    if (!res.ok) return
+    const data = await res.json()
+    receiptsStore.setReceipts(data.receipts || [])
+  } catch {}
+}
+
+onMounted(() => {
+  if (!loaded.value) {
+    receiptsStore.loadFromStorage()
+    if (!receiptsStore.loaded) {
+      fetchReceipts()
+    }
+  }
+})
+
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  return d
+    .toLocaleString('sv-SE', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    .replace(/\./g, '-')
+    .replace(',', '')
 }
 </script>
 
@@ -56,6 +73,8 @@ html {
   font-family: 'Inter', 'Roboto', Arial, sans-serif;
   background: linear-gradient(135deg, #232526 0%, #414345 100%);
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 .home-view {
   display: flex;
@@ -66,25 +85,97 @@ html {
   width: 100vw;
   min-height: 100vh;
   box-sizing: border-box;
-  background: transparent;
-}
-.status {
-  margin: 1.2rem 0 0.7rem 0;
-  font-size: 1.15rem;
-  text-align: center;
-  padding: 0.7rem 1.2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.08);
+  background: #181c22;
   color: #fff;
-  letter-spacing: 0.01em;
+  height: 100vh;
+  overflow: hidden;
 }
-.status.error {
-  color: #ff5252;
-  background: rgba(255, 82, 82, 0.08);
+.home-view::before {
+  content: '';
+  position: absolute;
+  top: -20vw;
+  left: -20vw;
+  width: 80px;
+  max-width: 80px;
+  min-width: 60px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  padding: 2.5rem 1rem 1.5rem 1rem;
+  width: 100vw;
+  min-height: 100vh;
+  height: 100vh;
+  box-sizing: border-box;
+  background: #181c22;
+  color: #fff;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  right: -25vw;
+  width: 70vw;
+  height: 70vw;
+  background: radial-gradient(
+    circle at 70% 70%,
+    #ffb347 0%,
+    #ff5e62 60%,
+    transparent 100%
+  );
+  filter: blur(60px) brightness(1.1);
+  opacity: 0.25;
+  z-index: 0;
 }
-.status.success {
-  color: #4caf50;
-  background: rgba(76, 175, 80, 0.08);
+.receipts-list {
+  width: 100%;
+  max-width: 420px;
+  background: transparent;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  margin-bottom: 2rem;
+}
+.receipts-list h3 {
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+  font-size: 1.25rem;
+  color: #fff;
+  text-align: center;
+  font-weight: 600;
+}
+.receipts-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.receipts-list li {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin-bottom: 0.7rem;
+  padding: 0.85rem 1rem;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.08rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.main-btn {
+  background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 2.1rem;
+  font-size: 1.13rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1.2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  transition: background 0.2s;
+}
+.main-btn:hover {
+  background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
 }
 </style>

@@ -1,7 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node'
 import mysql from 'mysql2/promise'
 
-// OBS! Lägg in dina egna miljövariabler i Vercel för DB-anslutning
 const dbConfig = {
   host: process.env.MYSQL_HOST,
   port: process.env.MYSQL_PORT ? Number(process.env.MYSQL_PORT) : 3306,
@@ -11,24 +10,16 @@ const dbConfig = {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST allowed' })
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Only GET allowed' })
   }
-
-  const { imageBase64, name } = req.body
-  if (!imageBase64 || !name) {
-    return res.status(400).json({ error: 'Missing imageBase64 or name' })
-  }
-
-  // Spara som blob i MySQL
   try {
     const conn = await mysql.createConnection(dbConfig)
-    await conn.execute(
-      'INSERT INTO receipts (name, image_blob, created_at) VALUES (?, ?, NOW())',
-      [name, Buffer.from(imageBase64, 'base64')]
+    const [rows] = await conn.execute(
+      'SELECT id, name, created_at FROM receipts ORDER BY created_at DESC'
     )
     await conn.end()
-    return res.status(200).json({ success: true })
+    return res.status(200).json({ receipts: rows })
   } catch (err) {
     return res.status(500).json({ error: 'DB error', details: err })
   }
