@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "vercel:dev": "vercel dev",
+    "vercel:dev": "vercel dev --local-config vercel-local.json",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview"
   },

@@ -15,7 +15,13 @@ const loading = ref(false)
 const error = ref('')
 const success = ref(false)
 
-async function onImageSelected(payload: { file: File; name: string }) {
+async function onImageSelected(
+  payload: { file: File; name: string } | undefined
+) {
+  if (!payload || !payload.file || !payload.name) {
+    error.value = 'Ingen bild eller namn angivet'
+    return
+  }
   error.value = ''
   success.value = false
   loading.value = true
@@ -34,10 +40,6 @@ async function onImageSelected(payload: { file: File; name: string }) {
       throw new Error(err.error || 'Fel vid uppladdning')
     }
     success.value = true
-    // Navigera bara automatiskt om användaren inte redan tryckt på tillbaka
-    // (Knappen goBack navigerar direkt)
-    // Om du vill ha kvar automatisk navigering, ta bort kommentaren nedan:
-    // setTimeout(() => { router.push('/') }, 1200)
     await fetchReceipts()
   } catch (e: any) {
     error.value = e.message || 'Något gick fel'
