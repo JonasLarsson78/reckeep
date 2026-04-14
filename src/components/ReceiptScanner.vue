@@ -15,7 +15,7 @@
         Tillbaka till lista
       </button>
       <div class="icon-wrapper">
-        <Camera :size="50" color="#00c6ff" />
+        <Camera :size="30" color="#00c6ff" />
       </div>
       <h2 class="title">Skanna kvitto</h2>
       <p class="desc">
@@ -149,6 +149,7 @@ body {
   box-sizing: border-box;
 }
 .receipt-bg {
+  padding-top: 20px;
   position: fixed;
   top: 0;
   left: 0;
@@ -158,10 +159,77 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 3.5vh;
   background: #181c22;
   overflow: hidden;
   z-index: 0;
+}
+
+@media (min-width: 600px) {
+  .receipt-scanner {
+    width: 100%;
+    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+    border-radius: 14px;
+    max-width: 98vw;
+    min-width: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+  .main-btn,
+  .upload-btn {
+    max-width: 100vw;
+    font-size: 1rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .name-input {
+    width: 100%;
+    min-width: 0;
+    font-size: 1rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+  }
+  .image-preview-wrapper {
+    max-height: 40vh;
+  }
+  .receipt-image {
+    max-width: 98vw;
+    max-height: 35vh !important;
+  }
+}
+@media (min-width: 600px) {
+  .receipt-scanner {
+    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
+    border-radius: 14px;
+    max-width: 98vw;
+    min-width: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  }
+  .main-btn,
+  .upload-btn {
+    max-width: 100vw;
+    font-size: 1rem;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .name-input {
+    width: 100%;
+    min-width: 0;
+    font-size: 1rem;
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+  }
+  .image-preview-wrapper {
+    max-height: 40vh;
+  }
+  .receipt-image {
+    max-width: 98vw;
+    max-height: 35vh;
+  }
 }
 .receipt-bg::before {
   content: '';
@@ -276,8 +344,8 @@ body {
       transform 0.1s;
     letter-spacing: 0.01em;
     margin-top: 0.3rem;
-    margin-left: auto !important;
-    margin-right: auto !important;
+    margin-left: auto;
+    margin-right: auto;
     display: block;
   }
   .upload-btn:active {
@@ -313,7 +381,7 @@ body {
   .receipt-image {
     display: block;
     max-width: 90vw;
-    max-height: 55vh;
+    max-height: 35vh;
     width: auto;
     height: auto;
     border-radius: 10px;

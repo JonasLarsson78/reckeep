@@ -1,11 +1,20 @@
 <template>
   <div class="home-view">
+    <img
+      src="/logo.png"
+      alt="RecKeep Logo"
+      style="width: 90%; margin-bottom: 1rem; border-radius: 10px"
+    />
     <button class="main-btn" @click="goToUpload" style="margin-bottom: 2rem">
       <Upload :size="20" style="margin-right: 10px" />
       <span>Ladda upp nytt kvitto</span>
     </button>
     <div class="receipts-list" v-if="receipts.length">
-      <h3>Uppladdade kvitton</h3>
+      <span class="receipts-header">
+        <ReceiptText :size="30" style="margin-right: 10px" />
+        <h3>Uppladdade kvitton</h3>
+      </span>
+
       <ul>
         <li
           v-for="receipt in receipts"
@@ -105,13 +114,19 @@ function formatDate(dateStr: string) {
 </script>
 
 <style lang="scss" scoped>
+// Modal covers entire screen and centers content
 .modal-bg {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.85);
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(24, 28, 34, 0.97);
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -119,12 +134,14 @@ function formatDate(dateStr: string) {
 }
 .modal-img-wrapper {
   position: relative;
-  max-width: 95vw;
-  max-height: 95vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  max-width: 95vw;
+  max-height: 95vh;
+  width: 100%;
+  height: 100%;
 }
 .modal-img {
   max-width: 90vw;
@@ -228,14 +245,16 @@ html {
   margin-bottom: 2rem;
 }
 .receipts-list h3 {
-  margin-top: 0;
-  margin-bottom: 1.2rem;
+  margin: 0;
   font-size: 1.25rem;
   color: #fff;
   text-align: center;
   font-weight: 600;
 }
 .receipts-list ul {
+  /* max-height sätts dynamiskt med calc för att ta hänsyn till knapp och rubrik */
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -251,6 +270,13 @@ html {
   justify-content: space-between;
   font-size: 1.08rem;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.receipts-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.2rem;
 }
 .main-btn {
   background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
