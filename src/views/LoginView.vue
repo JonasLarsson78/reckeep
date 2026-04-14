@@ -2,17 +2,31 @@
   <div class="auth-form">
     <h2>Logga in</h2>
     <form @submit.prevent="onLogin">
-      <input v-model="username" placeholder="Användarnamn" required />
-      <input
-        v-model="password"
-        type="password"
-        placeholder="Lösenord"
-        required
-      />
-      <button type="submit">Logga in</button>
+      <div class="input-group">
+        <label for="username">Användarnamn</label>
+        <input
+          id="username"
+          v-model="username"
+          placeholder="Användarnamn"
+          required
+        />
+      </div>
+      <div class="input-group">
+        <label for="password">Lösenord</label>
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          placeholder="Lösenord"
+          required
+        />
+      </div>
+      <button class="main-btn" type="submit">Logga in</button>
     </form>
     <div v-if="error" class="error">{{ error }}</div>
-    <router-link to="/register">Registrera dig</router-link>
+    <router-link class="register-link" to="/register"
+      >Registrera dig</router-link
+    >
   </div>
 </template>
 
@@ -40,17 +54,92 @@ async function onLogin() {
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../scss/variabels.scss';
 .auth-form {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 2rem;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: #fff;
+  max-width: 380px;
+  margin: 3rem auto;
+  padding: $padding * 2.5 $padding * 2 $padding * 2 $padding * 2;
+  border-radius: $border-radius * 2;
+  background: #181c22;
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+label {
+  margin-bottom: 0.5rem;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
+}
+input {
+  padding: 0.75rem 1rem;
+  border: 1px solid #444;
+  border-radius: $border-radius;
+  font-size: 1rem;
+  background: #181c22;
+  color: #fff;
+  transition: border 0.2s;
+  font-family: $font-family;
+}
+input:focus {
+  border: 1.5px solid $primary-color;
+  outline: none;
+}
+.main-btn {
+  width: 100%;
+  padding: 0.9rem 0;
+  background: linear-gradient(
+    90deg,
+    $primary-color 0%,
+    $primary-color-hover 100%
+  );
+  color: $button-text-color;
+  border: none;
+  border-radius: $border-radius;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  box-shadow: 0 2px 8px 0 rgba(79, 140, 255, 0.08);
+  transition: background 0.2s;
+}
+.main-btn:hover {
+  background: linear-gradient(
+    90deg,
+    $primary-color-hover 0%,
+    $primary-color 100%
+  );
 }
 .error {
-  color: red;
+  color: $alert-color;
   margin-top: 1rem;
+  text-align: center;
+  font-weight: 500;
+}
+.register-link {
+  display: block;
+  text-align: center;
+  margin-top: 2rem;
+  color: $primary-color;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+}
+.register-link:hover {
+  text-decoration: underline;
 }
 </style>

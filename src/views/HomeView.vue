@@ -60,9 +60,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useAuthStore } from '../store/authStore'
 import { Upload, ReceiptText, SquareX } from '@lucide/vue'
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import { useReceiptsStore } from '../store/receiptsStore'
 
 const authStore = useAuthStore()
 onMounted(() => {
@@ -112,10 +116,6 @@ function closeModal() {
   modalOpen.value = false
   modalImg.value = null
 }
-import { onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
-import { useReceiptsStore } from '../store/receiptsStore'
 
 const router = useRouter()
 const receiptsStore = useReceiptsStore()

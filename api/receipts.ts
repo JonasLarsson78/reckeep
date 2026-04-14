@@ -10,7 +10,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   // Kontrollera JWT-token
   const auth = req.headers.authorization
-  console.log('receipts: Authorization header', auth)
   if (!auth || !auth.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Ingen eller ogiltig token' })
   }

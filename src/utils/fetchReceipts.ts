@@ -6,8 +6,6 @@ export async function fetchReceipts() {
   const authStore = useAuthStore()
   try {
     const authHeader = authStore.token ? `Bearer ${authStore.token}` : ''
-    console.log('fetchReceipts: token', authStore.token)
-    console.log('fetchReceipts: Authorization header', authHeader)
     const res = await fetch('/api/receipts', {
       headers: {
         Authorization: authHeader,
