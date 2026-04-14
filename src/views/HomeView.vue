@@ -35,7 +35,13 @@
     <div v-if="modalOpen" class="modal-bg" @click="closeModal">
       <div class="modal-img-wrapper" @click.stop>
         <img v-if="modalImg" :src="modalImg" alt="Kvitto" class="modal-img" />
-        <div v-else-if="modalError" class="modal-loader" style="color: #e74c3c; font-weight: bold;">{{ modalError }}</div>
+        <div
+          v-else-if="modalError"
+          class="modal-loader"
+          style="color: #e74c3c; font-weight: bold"
+        >
+          {{ modalError }}
+        </div>
         <div v-else class="modal-loader">Laddar bild...</div>
         <button class="modal-close" @click="closeModal">
           <SquareX :size="20" style="margin-right: 10px" />
@@ -59,7 +65,8 @@ async function showReceipt(id: number) {
   try {
     const res = await fetch(`/api/receipt-image?id=${id}`)
     if (res.status === 404) {
-      modalError.value = 'Kvitto-bild hittades inte (404). Det kan bero på att bilden är borttagen eller aldrig laddades upp.'
+      modalError.value =
+        'Kvitto-bild hittades inte (404). Det kan bero på att bilden är borttagen eller aldrig laddades upp.'
       return
     }
     if (!res.ok) throw new Error('Kunde inte hämta bild')
