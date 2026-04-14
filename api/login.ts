@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { RowDataPacket } from 'mysql2'
 import bcrypt from 'bcryptjs'
-import { getDb } from './_db'
+import { getDb } from './db'
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
