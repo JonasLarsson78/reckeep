@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import bcrypt from 'bcryptjs'
-import { getDb } from './_db'
+import { getDb } from './db'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -11,11 +11,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'Användarnamn och lösenord krävs' })
   }
   const db = await getDb()
-  const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [username])
+  const [existing] = await db.query('SELECT id FROM users WHERE username = ?', [
+    username,
+  ])
   if (Array.isArray(existing) && existing.length > 0) {
     return res.status(409).json({ error: 'Användarnamnet är upptaget' })
   }
   const hash = await bcrypt.hash(password, 10)
-  await db.query('INSERT INTO users (username, password) VALUES (?, ?)', [username, hash])
+  await db.query('INSERT INTO users (username, password) VALUES (?, ?)', [
+    username,
+    hash,
+  ])
   return res.status(201).json({ success: true })
 }
