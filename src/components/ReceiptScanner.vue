@@ -54,11 +54,19 @@
         <span v-else>Byt bild</span>
       </button>
       <div v-if="imageUrl && !uploadSuccess" class="image-preview-wrapper">
-        <img
-          :src="imageUrl"
-          alt="Scanned receipt preview"
-          class="receipt-image"
-        />
+        <template v-if="!loading">
+          <img
+            :src="imageUrl"
+            alt="Scanned receipt preview"
+            class="receipt-image"
+          />
+        </template>
+        <template v-else>
+          <div class="loader-wrapper">
+            <div class="loader"></div>
+            <span>Laddar upp...</span>
+          </div>
+        </template>
       </div>
       <button
         v-if="imageFile && !loading && !uploadSuccess"
@@ -67,10 +75,7 @@
       >
         Ladda upp kvitto
       </button>
-      <div v-if="loading" class="loader-wrapper">
-        <div class="loader"></div>
-        <span>Laddar upp...</span>
-      </div>
+      <!-- Loader visas nu i preview ovan -->
       <div v-if="uploadSuccess" class="success-message">
         ✅ Kvitto uppladdat!
       </div>
@@ -291,13 +296,21 @@ body {
     width: 100%;
     display: flex;
     justify-content: center;
+    align-items: center;
     padding: 10px;
     background: transparent;
+    max-height: 60vh;
+    overflow: hidden;
   }
   .receipt-image {
+    display: block;
+    max-width: 90vw;
+    max-height: 55vh;
+    width: auto;
     height: auto;
-    max-height: 60vh;
     border-radius: 10px;
+    object-fit: contain;
+    margin: 0 auto;
   }
   .loader-wrapper {
     display: flex;
