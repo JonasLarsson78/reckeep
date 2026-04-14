@@ -11,3 +11,7 @@ const pinia = createPinia()
 app.use(pinia)
 app.use(router)
 app.mount('#app')
+// Rensa localStorage när användaren lämnar appen
+window.addEventListener('pagehide', () => {
+  localStorage.removeItem('receipts')
+})
