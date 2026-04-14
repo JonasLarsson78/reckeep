@@ -19,9 +19,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       [id]
     )
     await conn.end()
-    if (!Array.isArray(rows) || rows.length === 0)
+    const resultRows = rows as mysql.RowDataPacket[]
+    if (!Array.isArray(resultRows) || resultRows.length === 0)
       return res.status(404).json({ error: 'Not found' })
-    const imageBlob = rows[0].image_blob
+    const imageBlob = resultRows[0].image_blob
     const base64 = Buffer.from(imageBlob).toString('base64')
     res.setHeader('Content-Type', 'application/json')
     return res.status(200).json({ imageBase64: base64 })
