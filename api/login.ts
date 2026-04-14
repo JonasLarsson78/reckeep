@@ -1,8 +1,16 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { RowDataPacket } from 'mysql2'
+import mysql from 'mysql2/promise'
 import bcrypt from 'bcryptjs'
-import { getDb } from './db'
+
 import jwt from 'jsonwebtoken'
+const dbConfig = {
+  host: process.env.MYSQL_HOST,
+  port: process.env.MYSQL_PORT ? Number(process.env.MYSQL_PORT) : 3306,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE,
+}
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret'
 
@@ -14,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!username || !password) {
     return res.status(400).json({ error: 'Användarnamn och lösenord krävs' })
   }
-  const db = await getDb()
+  const db = await mysql.createConnection(dbConfig)
   type UserRow = { id: number; username: string; password: string }
   const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [
     username,
