@@ -36,6 +36,99 @@
           <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{
             formatDate(receipt.created_at)
           }}</span>
+          <span>
+            <Trash2
+              :size="20"
+              color="#e74c3c"
+              style="margin-left: 1rem; cursor: pointer"
+              @click.stop="openDeleteModal(receipt.id)"
+            />
+            <!-- Delete confirmation modal -->
+            <div
+              v-if="deleteModalOpen"
+              class="modal-bg"
+              @click="closeDeleteModal"
+            >
+              <div
+                class="modal-img-wrapper"
+                @click.stop
+                style="
+                  max-width: 400px;
+                  background: #23272f;
+                  border-radius: 16px;
+                  padding: 2rem 2.5rem;
+                  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.25);
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                  "
+                >
+                  <Trash2
+                    :size="38"
+                    color="#e74c3c"
+                    style="margin-bottom: 1.2rem"
+                  />
+                  <div
+                    style="
+                      font-size: 1.18rem;
+                      font-weight: 600;
+                      margin-bottom: 1.2rem;
+                      text-align: center;
+                    "
+                  >
+                    Ta bort kvitto?
+                  </div>
+                  <div
+                    style="
+                      color: #bbb;
+                      font-size: 1.02rem;
+                      margin-bottom: 2rem;
+                      text-align: center;
+                    "
+                  >
+                    Är du säker på att du vill ta bort detta kvitto? Detta går
+                    inte att ångra.
+                  </div>
+                  <div style="display: flex; gap: 1.2rem">
+                    <button
+                      @click="closeDeleteModal"
+                      style="
+                        background: #444;
+                        color: #fff;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 0.7rem 2.2rem;
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                      "
+                    >
+                      Avbryt
+                    </button>
+                    <button
+                      @click="confirmDeleteReceipt"
+                      style="
+                        background: #e74c3c;
+                        color: #fff;
+                        border: none;
+                        border-radius: 8px;
+                        padding: 0.7rem 2.2rem;
+                        font-size: 1.1rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                      "
+                    >
+                      Ta bort
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </span>
         </li>
       </ul>
     </div>
@@ -62,24 +155,20 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useAuthStore } from '../store/authStore'
-import { Upload, ReceiptText, SquareX } from '@lucide/vue'
+import { Upload, ReceiptText, SquareX, Trash2 } from '@lucide/vue'
 import { onMounted } from 'vue'
+import { fetchReceipts } from '../utils/fetchReceipts'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useReceiptsStore } from '../store/receiptsStore'
 
 const authStore = useAuthStore()
-onMounted(() => {
-  const token = localStorage.getItem('token')
-  if (token) authStore.setToken(token)
-})
 
 // Kör fetchReceipts när token är satt
 watch(
   () => authStore.token,
   (token) => {
     if (token) {
-      // Importera och kör fetchReceipts här
       import('../utils/fetchReceipts').then((mod) => mod.fetchReceipts())
     }
   },
@@ -93,6 +182,10 @@ function logout() {
 const modalOpen = ref(false)
 const modalImg = ref<string | null>(null)
 const modalError = ref<string | null>(null)
+const router = useRouter()
+const receiptsStore = useReceiptsStore()
+const { receipts, loaded } = storeToRefs(receiptsStore)
+
 async function showReceipt(id: number) {
   modalOpen.value = true
   modalImg.value = null
@@ -117,21 +210,8 @@ function closeModal() {
   modalImg.value = null
 }
 
-const router = useRouter()
-const receiptsStore = useReceiptsStore()
-const { receipts, loaded } = storeToRefs(receiptsStore)
-
 function goToUpload() {
   router.push('/upload')
-}
-
-async function fetchReceipts() {
-  try {
-    const res = await fetch('/api/receipts')
-    if (!res.ok) return
-    const data = await res.json()
-    receiptsStore.setReceipts(data.receipts || [])
-  } catch {}
 }
 
 onMounted(() => {
@@ -156,6 +236,40 @@ function formatDate(dateStr: string) {
     })
     .replace(/\./g, '-')
     .replace(',', '')
+}
+
+const deleteModalOpen = ref(false)
+const deleteTargetId = ref<number | null>(null)
+
+function openDeleteModal(id: number) {
+  deleteTargetId.value = id
+  deleteModalOpen.value = true
+}
+
+function closeDeleteModal() {
+  deleteModalOpen.value = false
+  deleteTargetId.value = null
+}
+
+async function confirmDeleteReceipt() {
+  if (!deleteTargetId.value) return
+  try {
+    const res = await fetch(`/api/delete-receipt?id=${deleteTargetId.value}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${authStore.token}`,
+      },
+    })
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}))
+      alert(data.error || 'Kunde inte ta bort kvittot.')
+      return
+    }
+    receiptsStore.removeReceipt(deleteTargetId.value)
+    closeDeleteModal()
+  } catch (e) {
+    alert('Fel vid borttagning av kvitto.')
+  }
 }
 </script>
 

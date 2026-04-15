@@ -2,8 +2,8 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import type { RowDataPacket } from 'mysql2'
 import mysql from 'mysql2/promise'
 import bcrypt from 'bcryptjs'
-
 import jwt from 'jsonwebtoken'
+
 const dbConfig = {
   host: process.env.MYSQL_HOST,
   port: process.env.MYSQL_PORT ? Number(process.env.MYSQL_PORT) : 3306,
