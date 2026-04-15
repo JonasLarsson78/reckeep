@@ -2,11 +2,12 @@
   <Teleport to="body">
     <div v-if="open" class="modal-bg" @click="$emit('cancel')">
       <div class="modal-content" @click.stop>
-        <Trash2 :size="38" color="#e74c3c" class="icon" />
+        <div class="icon-wrap">
+          <Trash2 :size="24" color="#ef4444" />
+        </div>
         <div class="title">Ta bort kvitto?</div>
         <div class="desc">
-          Är du säker på att du vill ta bort detta kvitto? Detta går inte att
-          ångra.
+          Detta går inte att ångra.
         </div>
         <div class="actions">
           <button class="btn-cancel" @click="$emit('cancel')">Avbryt</button>
@@ -28,60 +29,95 @@ defineEmits<{ cancel: []; confirm: [] }>()
 .modal-bg {
   position: fixed;
   inset: 0;
-  background: rgba(24, 28, 34, 0.97);
+  background: rgba(13, 13, 20, 0.8);
+  backdrop-filter: blur(8px);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem;
 }
+
 .modal-content {
-  max-width: 400px;
-  background: #23272f;
-  border-radius: 16px;
-  padding: 2rem 2.5rem;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 360px;
+  background: rgba(20, 14, 38, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 24px;
+  padding: 2rem 1.8rem;
+  backdrop-filter: blur(24px);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(139, 92, 246, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 0.6rem;
 }
-.icon {
-  margin-bottom: 1.2rem;
+
+.icon-wrap {
+  width: 52px;
+  height: 52px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.4rem;
 }
+
 .title {
-  font-size: 1.18rem;
+  font-size: 1.1rem;
   font-weight: 600;
-  margin-bottom: 1.2rem;
-  text-align: center;
-  color: #fff;
+  color: #f1f5f9;
 }
+
 .desc {
-  color: #bbb;
-  font-size: 1.02rem;
-  margin-bottom: 2rem;
-  text-align: center;
+  color: #64748b;
+  font-size: 0.9rem;
+  margin-bottom: 0.8rem;
 }
+
 .actions {
   display: flex;
-  gap: 1.2rem;
+  gap: 0.8rem;
+  width: 100%;
 }
+
 .btn-cancel {
-  background: #444;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.7rem 2.2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: inherit;
   cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
 }
+
 .btn-delete {
-  background: #e74c3c;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.7rem 2.2rem;
-  font-size: 1.1rem;
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 12px;
+  font-size: 0.95rem;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.25);
+  }
 }
 </style>

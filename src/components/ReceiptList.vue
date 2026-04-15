@@ -1,30 +1,31 @@
 <template>
   <div class="receipts-list" v-if="receipts.length">
-    <span class="receipts-header">
-      <ReceiptText :size="30" style="margin-right: 10px" />
-      <h3>Uppladdade kvitton</h3>
-    </span>
+    <div class="list-header">
+      <ReceiptText :size="16" color="#8b5cf6" />
+      <span>Uppladdade kvitton</span>
+    </div>
     <ul>
       <li
         v-for="receipt in receipts"
         :key="receipt.id"
         @click="$emit('show-receipt', receipt.id)"
       >
-        <span>
-          <ReceiptText :size="20" style="margin-right: 10px" />
+        <span class="receipt-name">
           <strong>{{ receipt.name }}</strong>
         </span>
         <span class="date">{{ formatDate(receipt.created_at) }}</span>
         <Trash2
-          :size="20"
-          color="#e74c3c"
+          :size="18"
           class="delete-icon"
           @click.stop="openDeleteModal(receipt.id)"
         />
       </li>
     </ul>
   </div>
-  <div v-else>Inga kvitton hittades.</div>
+  <div v-else class="empty-state">
+    <ReceiptText :size="40" color="#1e293b" />
+    <p>Inga kvitton uppladdade än</p>
+  </div>
 
   <DeleteModal
     :open="deleteModalOpen"
@@ -99,55 +100,95 @@ async function confirmDeleteReceipt() {
 .receipts-list {
   width: 100%;
   max-width: 420px;
-  background: transparent;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
-  margin-bottom: 2rem;
-
-  h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    color: #fff;
-    text-align: center;
-    font-weight: 600;
-  }
-
-  ul {
-    max-height: calc(100vh - 220px);
-    overflow-y: auto;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  li {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    margin-bottom: 0.7rem;
-    padding: 0.85rem 1rem;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 1.08rem;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-    cursor: pointer;
-  }
 }
-.receipts-header {
+
+.list-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin-bottom: 1.2rem;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #475569;
+  margin-bottom: 0.9rem;
 }
-.date {
-  margin-left: 1rem;
-  color: #888;
-  font-size: 0.95em;
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 }
-.delete-icon {
-  margin-left: 1rem;
+
+li {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
   cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.15s;
+
+  &:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.25);
+    transform: translateY(-1px);
+  }
+}
+
+.receipt-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.97rem;
+  color: #e2e8f0;
+
+  strong {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+}
+
+.date {
+  color: #475569;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.delete-icon {
+  color: #475569;
+  flex-shrink: 0;
+  transition: color 0.15s;
+
+  &:hover {
+    color: #ef4444;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  color: #334155;
+  font-size: 0.9rem;
+  padding: 3rem 1rem;
+
+  p {
+    margin: 0;
+  }
 }
 </style>

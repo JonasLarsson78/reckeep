@@ -4,3 +4,5 @@ declare module '*.vue' {
   export default component
 }
 declare module '*.scss'
+
+declare const __APP_VERSION__: string

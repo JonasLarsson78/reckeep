@@ -1,13 +1,14 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 body,
 html {
   margin: 0;
   padding: 0;
-  font-family: 'Roboto', sans-serif;
-  background: #181c22 !important;
-  color: #fff;
+  font-family: 'Inter', 'Roboto', sans-serif;
+  background: #0d0d14;
+  color: #f1f5f9;
   min-height: 100vh;
-}
-
-.container {
-  padding: $padding * 2;
+  -webkit-font-smoothing: antialiased;
 }

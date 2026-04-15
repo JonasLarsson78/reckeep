@@ -1,26 +1,22 @@
 <template>
-  <div class="receipt-bg">
-    <div class="receipt-scanner">
-      <button
-        class="main-btn"
-        @click="goBack"
-        style="
-          margin-bottom: 2rem;
-          display: flex;
-          align-items: center;
-          gap: 0.5em;
-        "
-      >
-        <ArrowLeft :size="20" />
-        Tillbaka till lista
+  <div class="scanner-bg">
+    <div class="glow glow-top" />
+    <div class="glow glow-bottom" />
+
+    <div class="scanner-card">
+      <button class="back-btn" @click="goBack">
+        <ArrowLeft :size="18" />
+        Tillbaka
       </button>
-      <div class="icon-wrapper">
-        <Camera :size="30" color="#00c6ff" />
+
+      <div class="card-header">
+        <div class="icon-wrap">
+          <Camera :size="24" color="#8b5cf6" />
+        </div>
+        <h2 class="title">Skanna kvitto</h2>
+        <p class="desc">Ta en bild eller välj från galleriet.</p>
       </div>
-      <h2 class="title">Skanna kvitto</h2>
-      <p class="desc">
-        Ta en bild på ditt kvitto eller ladda upp från mobilen.
-      </p>
+
       <input
         ref="fileInput"
         type="file"
@@ -29,6 +25,7 @@
         :disabled="loading"
         style="display: none"
       />
+
       <input
         v-model="receiptName"
         type="text"
@@ -36,33 +33,33 @@
         class="name-input"
         :disabled="loading"
       />
-      <button class="main-btn" @click="triggerFileInput" :disabled="loading">
-        <Camera :size="20" style="margin-right: 10px" />
-        <span v-if="!imageFile"> Välj eller ta bild</span>
+
+      <button class="pick-btn" @click="triggerFileInput" :disabled="loading">
+        <Camera :size="18" />
+        <span v-if="!imageFile">Välj eller ta bild</span>
         <span v-else>Byt bild</span>
       </button>
 
-      <!-- Cropper visas om bild är vald och inte uppladdad -->
-      <div v-if="imageUrl && !uploadSuccess" class="image-preview-wrapper">
+      <div v-if="imageUrl && !uploadSuccess" class="preview-wrapper">
         <template v-if="!loading">
           <advanced-cropper
-            v-if="imageUrl"
             :src="imageUrl"
             :autoZoom="true"
             :stencil-component="RectangleStencil"
             imageRestriction="fit-area"
             :defaultBoundaries="'fit'"
             @change="onCropChange"
-            class="receipt-cropper"
+            class="cropper"
           />
         </template>
         <template v-else>
-          <div class="loader-wrapper">
-            <div class="loader"></div>
+          <div class="loader-wrap">
+            <div class="spinner" />
             <span>Laddar upp...</span>
           </div>
         </template>
       </div>
+
       <button
         v-if="imageFile && !loading && !uploadSuccess"
         class="upload-btn"
@@ -70,9 +67,9 @@
       >
         Ladda upp kvitto
       </button>
-      <!-- Loader visas nu i preview ovan -->
-      <div v-if="uploadSuccess" class="success-message">
-        ✅ Kvitto uppladdat!
+
+      <div v-if="uploadSuccess" class="success">
+        Kvitto uppladdat!
       </div>
     </div>
   </div>
@@ -124,7 +121,6 @@ async function emitImage() {
   if (imageFile.value && receiptName.value.trim()) {
     loading.value = true
     let fileToSend = imageFile.value
-    // Om användaren har croppat, använd croppad bild
     if (cropData.value && cropData.value.canvas) {
       const blob = await new Promise<Blob | null>((resolve) =>
         cropData.value.canvas.toBlob(resolve, 'image/jpeg')
@@ -135,10 +131,7 @@ async function emitImage() {
         })
       }
     }
-    emit('image-selected', {
-      file: fileToSend,
-      name: receiptName.value,
-    })
+    emit('image-selected', { file: fileToSend, name: receiptName.value })
     setTimeout(() => {
       loading.value = false
       uploadSuccess.value = true
@@ -146,260 +139,265 @@ async function emitImage() {
       imageUrl.value = null
       receiptName.value = ''
       cropData.value = null
-      setTimeout(() => {
-        router.push('/')
-      }, 1000)
+      setTimeout(() => router.push('/'), 1000)
     }, 2000)
   }
 }
 </script>
 
 <style scoped lang="scss">
-.receipt-cropper {
-  width: 100%;
-  max-width: 400px;
-  height: 300px;
-  margin: 0 auto 1rem auto;
-  background: #222;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
-}
-.success-message {
-  color: #4caf50;
-  background: rgba(76, 175, 80, 0.08);
-  font-size: 1.1rem;
-  text-align: center;
-  margin-top: 1.2rem;
-  padding: 0.7rem 1.2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-html,
-body {
-  margin: 0;
-  padding: 0;
-  background: #181c22;
-  width: 100vw;
-  min-height: 100vh;
-  box-sizing: border-box;
-}
-.receipt-bg {
-  padding-top: 20px;
+.scanner-bg {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  min-height: 100vh;
+  inset: 0;
+  background: #0d0d14;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  background: #181c22;
-  overflow: hidden;
-  z-index: 0;
+  overflow-y: auto;
+  padding: 1.5rem 1rem 3rem;
 }
 
-@media (min-width: 600px) {
-  .receipt-scanner {
-    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
-    border-radius: 14px;
-    max-width: 98vw;
-    min-width: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  }
-  .main-btn,
-  .upload-btn {
-    max-width: 100vw;
-    font-size: 1rem;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  .name-input {
-    width: 100%;
-    min-width: 0;
-    font-size: 1rem;
-    padding-left: 0.9rem;
-    padding-right: 0.9rem;
-    margin-left: 0;
-    margin-right: 0;
-    box-sizing: border-box;
-  }
-  .image-preview-wrapper {
-    max-height: 40vh;
-  }
-  .receipt-image {
-    max-width: 98vw;
-    max-height: 35vh;
-  }
-}
-.receipt-bg::before {
-  content: '';
-  position: absolute;
-  top: -20vw;
-  left: -20vw;
-  width: 80px;
-  max-width: 80px;
-  min-width: 60px;
-  height: auto;
-  display: block;
-  margin: 10px auto 0 auto;
-  border-radius: 14px;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.13);
-  object-fit: contain;
-  background: #fff;
+.glow {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
   z-index: 0;
+
+  &.glow-top {
+    top: -20vh;
+    right: -10vw;
+    width: 55vw;
+    height: 55vw;
+    background: radial-gradient(
+      circle,
+      rgba(139, 92, 246, 0.2) 0%,
+      transparent 70%
+    );
+  }
+
+  &.glow-bottom {
+    bottom: -20vh;
+    left: -10vw;
+    width: 55vw;
+    height: 55vw;
+    background: radial-gradient(
+      circle,
+      rgba(34, 211, 238, 0.12) 0%,
+      transparent 70%
+    );
+  }
 }
-.receipt-bg::after {
-  content: '';
-  position: absolute;
-  bottom: -25vw;
-  right: -25vw;
-  width: 70vw;
-  height: 70vw;
-  background: radial-gradient(
-    circle at 70% 70%,
-    #ffb347 0%,
-    #ff5e62 60%,
-    transparent 100%
-  );
-  filter: blur(60px) brightness(1.1);
-  opacity: 0.25;
-  z-index: 0;
-}
-.receipt-scanner {
+
+.scanner-card {
   position: relative;
   z-index: 1;
-  .receipt-scanner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    gap: 1.1rem;
-    background: rgba(30, 32, 34, 0.92);
-    border-radius: 22px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.13);
-    padding: 2.2rem 1.2rem 2rem 1.2rem;
-    margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  padding: 1.5rem 1.5rem 2rem;
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(139, 92, 246, 0.06);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #94a3b8;
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
   }
-  .icon-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-  .title {
-    color: #fff;
-    font-size: 1.45rem;
-    font-weight: 700;
-    margin: 0 0 0.2rem 0;
-    letter-spacing: 0.01em;
-    text-align: center;
-  }
-  .desc {
-    color: #b0b8c1;
-    font-size: 1.05rem;
-    margin: 0 0 1.1rem 0;
-    text-align: center;
-  }
-  .main-btn {
-    width: 100%;
-    max-width: 220px;
-    padding: 0.7rem 0;
-    font-size: 1.05rem;
-    border-radius: 12px;
-    border: none;
-    background: linear-gradient(90deg, #1976d2 60%, #00c6ff 100%);
-    color: #fff;
-    font-weight: 700;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition:
-      background 0.2s,
-      transform 0.1s;
-    letter-spacing: 0.01em;
-    margin-bottom: 0.5rem;
-    margin-left: auto;
-    margin-right: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    letter-spacing: 0.01em;
-    margin-bottom: 0.5rem;
-  }
-  .main-btn:active {
-    background: #1565c0;
-    transform: scale(0.97);
-  }
-  .upload-btn {
-    width: 100%;
-    max-width: 220px;
-    padding: 0.6rem 0;
-    font-size: 1.01rem;
-    border-radius: 10px;
-    border: none;
-    background: linear-gradient(90deg, #00c6ff 60%, #1976d2 100%);
-    color: #fff;
-    font-weight: 700;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition:
-      background 0.2s,
-      transform 0.1s;
-    letter-spacing: 0.01em;
-    margin-top: 0.3rem;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
-  }
-  .upload-btn:active {
-    background: #1565c0;
-    transform: scale(0.97);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+}
+
+.icon-wrap {
+  width: 52px;
+  height: 52px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.4rem;
+}
+
+.title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.desc {
+  color: #475569;
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+.name-input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  color: #f1f5f9;
+  font-size: 1rem;
+  font-family: inherit;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+
+  &::placeholder {
+    color: #334155;
   }
 
-  .name-input {
-    width: 100%;
-    border: none;
-    font-size: 20px;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-    transition: background 0.2s;
-    margin-bottom: 1rem;
-    padding: 0.5rem;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    box-sizing: border-box;
+  &:focus {
+    outline: none;
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
   }
-  .name-input:focus {
-    outline: 2px solid #00c6ff;
+
+  &:disabled {
+    opacity: 0.5;
   }
-  .image-preview-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
-    background: transparent;
-    max-height: 60vh;
-    overflow: hidden;
+}
+
+.pick-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.85rem;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  color: #a78bfa;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover:not(:disabled) {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
   }
-  .loader-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
-  .loader {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #00c6ff;
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    animation: spin 1s linear infinite;
+}
+
+.preview-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 50vh;
+  overflow: hidden;
+  border-radius: 14px;
+}
+
+.cropper {
+  width: 100%;
+  height: 280px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 14px;
+}
+
+.loader-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: #64748b;
+  font-size: 0.9rem;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(139, 92, 246, 0.2);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
+}
+
+.upload-btn {
+  width: 100%;
+  padding: 0.95rem;
+  background: linear-gradient(135deg, #8b5cf6 0%, #22d3ee 100%);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+  transition:
+    opacity 0.2s,
+    transform 0.15s;
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
   }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.success {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  border-radius: 12px;
+  padding: 0.75rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  width: 100%;
+  justify-content: center;
 }
 </style>
