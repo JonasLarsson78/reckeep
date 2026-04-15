@@ -357,5 +357,6 @@ html {
   cursor: pointer;
   box-shadow: 0 2px 12px rgba(231, 76, 60, 0.2);
   transition: background 0.2s;
+  margin-bottom: 10px;
 }
 </style>
