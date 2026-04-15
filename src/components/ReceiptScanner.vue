@@ -153,8 +153,9 @@ async function autoCropReceipt(file: File) {
       cv.RETR_EXTERNAL,
       cv.CHAIN_APPROX_SIMPLE
     )
-    // Försök hitta största fyrhörning (kvitto)
-    let maxArea = 0
+    // Försök hitta bästa kvittoliknande kontur (vit, rektangulär, stor)
+    let imgArea = img.width * img.height
+    let bestScore = 0
     let bestQuad = null
     for (let i = 0; i < contours.size(); i++) {
       let cnt = contours.get(i)
@@ -162,15 +163,35 @@ async function autoCropReceipt(file: File) {
       let approx = new cv.Mat()
       cv.approxPolyDP(cnt, approx, 0.02 * peri, true)
       let area = cv.contourArea(cnt)
-      if (approx.rows === 4 && area > maxArea) {
-        maxArea = area
-        bestQuad = approx
+      if (approx.rows === 4 && area > 0.15 * imgArea) {
+        // Rektangulärhetskvot
+        let rect = cv.boundingRect(approx)
+        let aspect = rect.height / rect.width
+        // Typiskt kvitto: högt och smalt (ca 2-6)
+        if (aspect > 1.5 && aspect < 7) {
+          // Kontrollera medelvärde på ROI (ska vara ljust/"vitt")
+          let mask = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC1)
+          cv.drawContours(mask, new cv.MatVector([approx]), 0, new cv.Scalar(255), -1)
+          let mean = cv.mean(src, mask)[0]
+          mask.delete()
+          // Score: area * vithet * rektanguläritet
+          let score = area * (mean / 255) * (2 - Math.abs(aspect - 3) / 3)
+          if (score > bestScore) {
+            if (bestQuad) bestQuad.delete()
+            bestScore = score
+            bestQuad = approx
+          } else {
+            approx.delete()
+          }
+        } else {
+          approx.delete()
+        }
       } else {
         approx.delete()
       }
     }
     let croppedDataUrl = ''
-    if (bestQuad && maxArea > 10000) {
+    if (bestQuad && bestScore > 0) {
       // Sortera hörn: [top-left, top-right, bottom-right, bottom-left]
       let pts = []
       for (let i = 0; i < 4; i++) {
