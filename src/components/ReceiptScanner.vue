@@ -25,7 +25,6 @@
         ref="fileInput"
         type="file"
         accept="image/*"
-        capture="environment"
         @change="onFileChange"
         :disabled="loading"
         style="display: none"
