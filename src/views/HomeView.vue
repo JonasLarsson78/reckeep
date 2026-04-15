@@ -132,6 +132,7 @@
         </li>
       </ul>
     </div>
+    <div v-else>Inga kvitton hittades.</div>
     <div v-if="modalOpen" class="modal-bg" @click="closeModal">
       <div class="modal-img-wrapper" @click.stop>
         <img v-if="modalImg" :src="modalImg" alt="Kvitto" class="modal-img" />
