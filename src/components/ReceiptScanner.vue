@@ -46,7 +46,7 @@
         <template v-if="!loading">
           <img
             :src="imageUrl"
-            alt="Scanned receipt preview"
+            alt="Kvitto preview"
             class="receipt-image"
           />
         </template>
@@ -73,28 +73,10 @@
 </template>
 
 <script setup lang="ts">
+
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Camera } from '@lucide/vue'
-
-// OpenCV.js laddningsstatus
-const cvReady = ref(false)
-function waitForOpenCV() {
-  return new Promise<void>((resolve) => {
-    if ((window as any).cv && (window as any).cv.imread) {
-      cvReady.value = true
-      resolve()
-    } else {
-      const check = setInterval(() => {
-        if ((window as any).cv && (window as any).cv.imread) {
-          cvReady.value = true
-          clearInterval(check)
-          resolve()
-        }
-      }, 100)
-    }
-  })
-}
 
 const router = useRouter()
 
@@ -120,189 +102,11 @@ function onFileChange(e: Event) {
   const target = e.target as HTMLInputElement
   if (target.files && target.files[0]) {
     imageFile.value = target.files[0]
-    // Auto-crop kvitto
-    autoCropReceipt(target.files[0])
+    imageUrl.value = URL.createObjectURL(target.files[0])
   }
 }
 
-async function autoCropReceipt(file: File) {
-  await waitForOpenCV()
-  const img = new Image()
-  img.onload = async () => {
-    const canvas = document.createElement('canvas')
-    canvas.width = img.width
-    canvas.height = img.height
-    const ctx = canvas.getContext('2d')!
-    ctx.drawImage(img, 0, 0)
-    // Läs in bilden till OpenCV
-    const cv = (window as any).cv
-    let src = cv.imread(canvas)
-    let dst = new cv.Mat()
-    // Förbehandling: gråskala & blur
-    cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0)
-    cv.GaussianBlur(src, src, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT)
-    // Kantdetektering
-    cv.Canny(src, dst, 50, 150)
-    // Hitta konturer
-    let contours = new cv.MatVector()
-    let hierarchy = new cv.Mat()
-    cv.findContours(
-      dst,
-      contours,
-      hierarchy,
-      cv.RETR_EXTERNAL,
-      cv.CHAIN_APPROX_SIMPLE
-    )
-    // Försök hitta bästa kvittoliknande kontur (vit, rektangulär, stor)
-    let imgArea = img.width * img.height
-    let bestScore = 0
-    let bestQuad = null
-    let largestRect = null
-    let largestRectArea = 0
-    for (let i = 0; i < contours.size(); i++) {
-      let cnt = contours.get(i)
-      let peri = cv.arcLength(cnt, true)
-      let approx = new cv.Mat()
-      cv.approxPolyDP(cnt, approx, 0.02 * peri, true)
-      let area = cv.contourArea(cnt)
-      // Spara största rektangel för fallback
-      if (area > largestRectArea) {
-        largestRectArea = area
-        largestRect = cnt
-      }
-      if (approx.rows === 4 && area > 0.05 * imgArea) {
-        // Rektangulärhetskvot
-        let rect = cv.boundingRect(approx)
-        let aspect = rect.height / rect.width
-        // Tillåt bredare kvitton (1.0-10.0)
-        if (aspect > 1.0 && aspect < 10.0) {
-          // Kontrollera medelvärde på ROI (ska vara ljust/"vitt")
-          let mask = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC1)
-          cv.drawContours(mask, new cv.MatVector([approx]), 0, new cv.Scalar(255), -1)
-          let mean = cv.mean(src, mask)[0]
-          mask.delete()
-          // Score: area * vithet * rektanguläritet
-          let score = area * (mean / 255) * (2 - Math.abs(aspect - 3) / 3)
-          if (score > bestScore) {
-            if (bestQuad) bestQuad.delete()
-            bestScore = score
-            bestQuad = approx
-          } else {
-            approx.delete()
-          }
-        } else {
-          approx.delete()
-        }
-      } else {
-        approx.delete()
-      }
-    }
-    let croppedDataUrl = ''
-    if (bestQuad && bestScore > 0) {
-      // Sortera hörn: [top-left, top-right, bottom-right, bottom-left]
-      let pts = []
-      for (let i = 0; i < 4; i++) {
-        pts.push({
-          x: bestQuad.intPtr(i, 0)[0],
-          y: bestQuad.intPtr(i, 0)[1],
-        })
-      }
-      pts.sort((a, b) => a.y - b.y)
-      let top = pts.slice(0, 2).sort((a, b) => a.x - b.x)
-      let bottom = pts.slice(2, 4).sort((a, b) => a.x - b.x)
-      let ordered = [top[0], top[1], bottom[1], bottom[0]]
-      let w1 = Math.hypot(ordered[1].x - ordered[0].x, ordered[1].y - ordered[0].y)
-      let w2 = Math.hypot(ordered[2].x - ordered[3].x, ordered[2].y - ordered[3].y)
-      let h1 = Math.hypot(ordered[3].x - ordered[0].x, ordered[3].y - ordered[0].y)
-      let h2 = Math.hypot(ordered[2].x - ordered[1].x, ordered[2].y - ordered[1].y)
-      let maxWidth = Math.max(w1, w2)
-      let maxHeight = Math.max(h1, h2)
-      let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        ordered[0].x, ordered[0].y,
-        ordered[1].x, ordered[1].y,
-        ordered[2].x, ordered[2].y,
-        ordered[3].x, ordered[3].y,
-      ])
-      let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-        0, 0,
-        maxWidth, 0,
-        maxWidth, maxHeight,
-        0, maxHeight,
-      ])
-      let M = cv.getPerspectiveTransform(srcTri, dstTri)
-      let warped = new cv.Mat()
-      cv.warpPerspective(src, warped, M, new cv.Size(maxWidth, maxHeight))
-      // Konvertera till dataURL
-      let warpCanvas = document.createElement('canvas')
-      warpCanvas.width = maxWidth
-      warpCanvas.height = maxHeight
-      cv.imshow(warpCanvas, warped)
-      croppedDataUrl = warpCanvas.toDataURL('image/jpeg', 0.95)
-      imageUrl.value = croppedDataUrl
-      // Konvertera till File-objekt
-      const arr = croppedDataUrl.split(',')
-      const mimeMatch = arr[0].match(/:(.*?);/)
-      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
-      const bstr = atob(arr[1])
-      let n = bstr.length
-      const u8arr = new Uint8Array(n)
-      while (n--) u8arr[n] = bstr.charCodeAt(n)
-      imageFile.value = new File(
-        [u8arr],
-        file.name.replace(/\.[^.]+$/, '') + '-cropped.jpg',
-        { type: mime }
-      )
-      // Clean up
-      warped.delete()
-      M.delete()
-      srcTri.delete()
-      dstTri.delete()
-      bestQuad.delete()
-    } else if (largestRect && largestRectArea > 0.05 * imgArea) {
-      // Fallback: bounding rect på största kontur
-      let rect = cv.boundingRect(largestRect)
-      const cropCanvas = document.createElement('canvas')
-      cropCanvas.width = rect.width
-      cropCanvas.height = rect.height
-      const cropCtx = cropCanvas.getContext('2d')!
-      cropCtx.drawImage(
-        img,
-        rect.x,
-        rect.y,
-        rect.width,
-        rect.height,
-        0,
-        0,
-        rect.width,
-        rect.height
-      )
-      croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95)
-      imageUrl.value = croppedDataUrl
-      // Konvertera till File-objekt
-      const arr = croppedDataUrl.split(',')
-      const mimeMatch = arr[0].match(/:(.*?);/)
-      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
-      const bstr = atob(arr[1])
-      let n = bstr.length
-      const u8arr = new Uint8Array(n)
-      while (n--) u8arr[n] = bstr.charCodeAt(n)
-      imageFile.value = new File(
-        [u8arr],
-        file.name.replace(/\.[^.]+$/, '') + '-cropped.jpg',
-        { type: mime }
-      )
-    } else {
-      // Om ingen tydlig kontur hittas, visa original
-      imageUrl.value = canvas.toDataURL('image/jpeg', 0.95)
-      imageFile.value = file
-    }
-    src.delete()
-    dst.delete()
-    contours.delete()
-    hierarchy.delete()
-  }
-  img.src = URL.createObjectURL(file)
-}
+
 
 async function emitImage() {
   if (imageFile.value && receiptName.value.trim()) {
