@@ -52,7 +52,6 @@ async function onRegister() {
 </script>
 
 <style scoped lang="scss">
-@import '../scss/variabels.scss';
 .auth-form {
   max-width: 380px;
   margin: 3rem auto;

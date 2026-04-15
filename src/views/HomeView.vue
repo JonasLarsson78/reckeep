@@ -340,4 +340,22 @@ html {
 .main-btn:hover {
   background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
 }
+
+.logout-btn {
+  position: relative;
+  top: 0px;
+  right: 0px;
+  width: fit-content;
+  height: 25px;
+  background: #e74c3c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(231, 76, 60, 0.2);
+  transition: background 0.2s;
+}
 </style>
