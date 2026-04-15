@@ -26,13 +26,18 @@
         style="display: none"
       />
 
-      <input
-        v-model="receiptName"
-        type="text"
-        placeholder="Namn på kvittot"
-        class="name-input"
-        :disabled="loading"
-      />
+      <div class="name-field">
+        <input
+          v-model="receiptName"
+          type="text"
+          placeholder="Namn på kvittot"
+          class="name-input"
+          :class="{ 'name-input--error': nameError }"
+          :disabled="loading"
+          @input="nameError = ''"
+        />
+        <span v-if="nameError" class="name-error">{{ nameError }}</span>
+      </div>
 
       <button class="pick-btn" @click="triggerFileInput" :disabled="loading">
         <Camera :size="18" />
@@ -94,6 +99,7 @@ const uploadSuccess = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const receiptName = ref('')
 const cropData = ref<any>(null)
+const nameError = ref('')
 
 function triggerFileInput() {
   fileInput.value?.click()
@@ -118,6 +124,10 @@ function onCropChange({ coordinates, canvas }: any) {
 }
 
 async function emitImage() {
+  if (!receiptName.value.trim()) {
+    nameError.value = 'Ange ett namn på kvittot innan du laddar upp.'
+    return
+  }
   if (imageFile.value && receiptName.value.trim()) {
     loading.value = true
     let fileToSend = imageFile.value
@@ -262,6 +272,18 @@ async function emitImage() {
   margin: 0;
 }
 
+.name-field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.name-error {
+  font-size: 0.82rem;
+  color: #f87171;
+}
+
 .name-input {
   width: 100%;
   padding: 0.85rem 1rem;
@@ -283,6 +305,11 @@ async function emitImage() {
     outline: none;
     border-color: #8b5cf6;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+  }
+
+  &.name-input--error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
   }
 
   &:disabled {
