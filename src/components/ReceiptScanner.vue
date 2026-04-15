@@ -157,18 +157,25 @@ async function autoCropReceipt(file: File) {
     let imgArea = img.width * img.height
     let bestScore = 0
     let bestQuad = null
+    let largestRect = null
+    let largestRectArea = 0
     for (let i = 0; i < contours.size(); i++) {
       let cnt = contours.get(i)
       let peri = cv.arcLength(cnt, true)
       let approx = new cv.Mat()
       cv.approxPolyDP(cnt, approx, 0.02 * peri, true)
       let area = cv.contourArea(cnt)
-      if (approx.rows === 4 && area > 0.15 * imgArea) {
+      // Spara största rektangel för fallback
+      if (area > largestRectArea) {
+        largestRectArea = area
+        largestRect = cnt
+      }
+      if (approx.rows === 4 && area > 0.05 * imgArea) {
         // Rektangulärhetskvot
         let rect = cv.boundingRect(approx)
         let aspect = rect.height / rect.width
-        // Typiskt kvitto: högt och smalt (ca 2-6)
-        if (aspect > 1.5 && aspect < 7) {
+        // Tillåt bredare kvitton (1.0-10.0)
+        if (aspect > 1.0 && aspect < 10.0) {
           // Kontrollera medelvärde på ROI (ska vara ljust/"vitt")
           let mask = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC1)
           cv.drawContours(mask, new cv.MatVector([approx]), 0, new cv.Scalar(255), -1)
@@ -251,55 +258,43 @@ async function autoCropReceipt(file: File) {
       srcTri.delete()
       dstTri.delete()
       bestQuad.delete()
-    } else {
+    } else if (largestRect && largestRectArea > 0.05 * imgArea) {
       // Fallback: bounding rect på största kontur
-      let maxArea2 = 0
-      let maxContour = null
-      for (let i = 0; i < contours.size(); i++) {
-        let cnt = contours.get(i)
-        let area = cv.contourArea(cnt)
-        if (area > maxArea2) {
-          maxArea2 = area
-          maxContour = cnt
-        }
-      }
-      if (maxContour && maxArea2 > 10000) {
-        let rect = cv.boundingRect(maxContour)
-        const cropCanvas = document.createElement('canvas')
-        cropCanvas.width = rect.width
-        cropCanvas.height = rect.height
-        const cropCtx = cropCanvas.getContext('2d')!
-        cropCtx.drawImage(
-          img,
-          rect.x,
-          rect.y,
-          rect.width,
-          rect.height,
-          0,
-          0,
-          rect.width,
-          rect.height
-        )
-        croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95)
-        imageUrl.value = croppedDataUrl
-        // Konvertera till File-objekt
-        const arr = croppedDataUrl.split(',')
-        const mimeMatch = arr[0].match(/:(.*?);/)
-        const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
-        const bstr = atob(arr[1])
-        let n = bstr.length
-        const u8arr = new Uint8Array(n)
-        while (n--) u8arr[n] = bstr.charCodeAt(n)
-        imageFile.value = new File(
-          [u8arr],
-          file.name.replace(/\.[^.]+$/, '') + '-cropped.jpg',
-          { type: mime }
-        )
-      } else {
-        // Om ingen tydlig kontur hittas, visa original
-        imageUrl.value = canvas.toDataURL('image/jpeg', 0.95)
-        imageFile.value = file
-      }
+      let rect = cv.boundingRect(largestRect)
+      const cropCanvas = document.createElement('canvas')
+      cropCanvas.width = rect.width
+      cropCanvas.height = rect.height
+      const cropCtx = cropCanvas.getContext('2d')!
+      cropCtx.drawImage(
+        img,
+        rect.x,
+        rect.y,
+        rect.width,
+        rect.height,
+        0,
+        0,
+        rect.width,
+        rect.height
+      )
+      croppedDataUrl = cropCanvas.toDataURL('image/jpeg', 0.95)
+      imageUrl.value = croppedDataUrl
+      // Konvertera till File-objekt
+      const arr = croppedDataUrl.split(',')
+      const mimeMatch = arr[0].match(/:(.*?);/)
+      const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg'
+      const bstr = atob(arr[1])
+      let n = bstr.length
+      const u8arr = new Uint8Array(n)
+      while (n--) u8arr[n] = bstr.charCodeAt(n)
+      imageFile.value = new File(
+        [u8arr],
+        file.name.replace(/\.[^.]+$/, '') + '-cropped.jpg',
+        { type: mime }
+      )
+    } else {
+      // Om ingen tydlig kontur hittas, visa original
+      imageUrl.value = canvas.toDataURL('image/jpeg', 0.95)
+      imageFile.value = file
     }
     src.delete()
     dst.delete()
