@@ -9,8 +9,10 @@
 import { ref } from 'vue'
 import ReceiptScanner from '../components/ReceiptScanner.vue'
 import { fetchReceipts } from '../utils/fetchReceipts'
+import { useAuthStore } from '../store/authStore'
 
 const error = ref('')
+const authStore = useAuthStore()
 
 async function onImageSelected(
   payload: { file: File; name: string } | undefined
@@ -24,7 +26,10 @@ async function onImageSelected(
     const base64 = await fileToBase64(payload.file)
     const res = await fetch('/api/scan-receipt', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${authStore.token}`,
+      },
       body: JSON.stringify({
         imageBase64: base64.split(',')[1],
         name: payload.name,
