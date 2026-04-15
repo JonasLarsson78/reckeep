@@ -147,6 +147,9 @@ async function emitImage() {
       imageUrl.value = null
       receiptName.value = ''
       cropData.value = null
+      setTimeout(() => {
+        router.push('/')
+      }, 1000)
     }, 2000)
   }
 }
