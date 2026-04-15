@@ -174,10 +174,6 @@ async function emitImage() {
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
-.no-scroll {
-  overflow: hidden;
-  height: 100vh;
-}
 html,
 body {
   margin: 0;
@@ -203,40 +199,6 @@ body {
   z-index: 0;
 }
 
-@media (min-width: 600px) {
-  .receipt-scanner {
-    width: 100%;
-    padding: 1.2rem 0.5rem 1.2rem 0.5rem;
-    border-radius: 14px;
-    max-width: 98vw;
-    min-width: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  }
-  .main-btn,
-  .upload-btn {
-    max-width: 100vw;
-    font-size: 1rem;
-    padding-left: 0;
-    padding-right: 0;
-  }
-  .name-input {
-    width: 100%;
-    min-width: 0;
-    font-size: 1rem;
-    padding-left: 0.9rem;
-    padding-right: 0.9rem;
-    margin-left: 0;
-    margin-right: 0;
-    box-sizing: border-box;
-  }
-  .image-preview-wrapper {
-    max-height: 40vh;
-  }
-  .receipt-image {
-    max-width: 98vw;
-    max-height: 35vh !important;
-  }
-}
 @media (min-width: 600px) {
   .receipt-scanner {
     padding: 1.2rem 0.5rem 1.2rem 0.5rem;
@@ -416,16 +378,6 @@ body {
     background: transparent;
     max-height: 60vh;
     overflow: hidden;
-  }
-  .receipt-image {
-    display: block;
-    max-width: 90vw;
-    max-height: 35vh;
-    width: auto;
-    height: auto;
-    border-radius: 10px;
-    object-fit: contain;
-    margin: 0 auto;
   }
   .loader-wrapper {
     display: flex;

@@ -20,11 +20,6 @@ export const useReceiptsStore = defineStore('receipts', {
         this.loaded = true
       }
     },
-    clearReceipts() {
-      this.receipts = []
-      this.loaded = false
-      localStorage.removeItem('receipts')
-    },
     removeReceipt(id: number) {
       this.receipts = this.receipts.filter((r) => r.id !== id)
       localStorage.setItem('receipts', JSON.stringify(this.receipts))

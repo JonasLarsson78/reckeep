@@ -109,22 +109,6 @@ function fileToBase64(file: File): Promise<string> {
   opacity: 0.25;
   z-index: 0;
 }
-.main-btn {
-  background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 0.9rem 2.1rem;
-  font-size: 1.13rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 1.2rem;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  transition: background 0.2s;
-}
-.main-btn:hover {
-  background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
-}
 .status {
   margin: 1.2rem 0 0.7rem 0;
   font-size: 1.15rem;

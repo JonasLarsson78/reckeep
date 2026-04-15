@@ -1,10 +1,6 @@
 <template>
   <div class="home-view">
-    <button
-      class="logout-btn"
-      @click="logout"
-      style="float: right; margin: 1rem"
-    >
+    <button class="logout-btn" @click="logout" style="float: right; margin: 1rem">
       Logga ut
     </button>
     <img
@@ -16,176 +12,61 @@
       <Upload :size="20" style="margin-right: 10px" />
       <span>Ladda upp nytt kvitto</span>
     </button>
-    <div class="receipts-list" v-if="receipts.length">
-      <span class="receipts-header">
-        <ReceiptText :size="30" style="margin-right: 10px" />
-        <h3>Uppladdade kvitton</h3>
-      </span>
 
-      <ul>
-        <li
-          v-for="receipt in receipts"
-          :key="receipt.id"
-          @click="showReceipt(receipt.id)"
-          style="cursor: pointer"
-        >
-          <span>
-            <ReceiptText :size="20" style="margin-right: 10px" />
-            <strong>{{ receipt.name }}</strong>
-          </span>
-          <span style="margin-left: 1rem; color: #888; font-size: 0.95em">{{
-            formatDate(receipt.created_at)
-          }}</span>
-          <span>
-            <Trash2
-              :size="20"
-              color="#e74c3c"
-              style="margin-left: 1rem; cursor: pointer"
-              @click.stop="openDeleteModal(receipt.id)"
-            />
-            <!-- Delete confirmation modal -->
-            <div
-              v-if="deleteModalOpen"
-              class="modal-bg"
-              @click="closeDeleteModal"
-            >
-              <div
-                class="modal-img-wrapper"
-                @click.stop
-                style="
-                  max-width: 400px;
-                  background: #23272f;
-                  border-radius: 16px;
-                  padding: 2rem 2.5rem;
-                  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.25);
-                "
-              >
-                <div
-                  style="
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                  "
-                >
-                  <Trash2
-                    :size="38"
-                    color="#e74c3c"
-                    style="margin-bottom: 1.2rem"
-                  />
-                  <div
-                    style="
-                      font-size: 1.18rem;
-                      font-weight: 600;
-                      margin-bottom: 1.2rem;
-                      text-align: center;
-                    "
-                  >
-                    Ta bort kvitto?
-                  </div>
-                  <div
-                    style="
-                      color: #bbb;
-                      font-size: 1.02rem;
-                      margin-bottom: 2rem;
-                      text-align: center;
-                    "
-                  >
-                    Är du säker på att du vill ta bort detta kvitto? Detta går
-                    inte att ångra.
-                  </div>
-                  <div style="display: flex; gap: 1.2rem">
-                    <button
-                      @click="closeDeleteModal"
-                      style="
-                        background: #444;
-                        color: #fff;
-                        border: none;
-                        border-radius: 8px;
-                        padding: 0.7rem 2.2rem;
-                        font-size: 1.1rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                      "
-                    >
-                      Avbryt
-                    </button>
-                    <button
-                      @click="confirmDeleteReceipt"
-                      style="
-                        background: #e74c3c;
-                        color: #fff;
-                        border: none;
-                        border-radius: 8px;
-                        padding: 0.7rem 2.2rem;
-                        font-size: 1.1rem;
-                        font-weight: 600;
-                        cursor: pointer;
-                      "
-                    >
-                      Ta bort
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </span>
-        </li>
-      </ul>
-    </div>
-    <div v-else>Inga kvitton hittades.</div>
-    <div v-if="modalOpen" class="modal-bg" @click="closeModal">
-      <div class="modal-img-wrapper" @click.stop>
-        <img v-if="modalImg" :src="modalImg" alt="Kvitto" class="modal-img" />
-        <div
-          v-else-if="modalError"
-          class="modal-loader"
-          style="color: #e74c3c; font-weight: bold"
-        >
-          {{ modalError }}
-        </div>
-        <div v-else class="modal-loader">Laddar bild...</div>
-        <button class="modal-close" @click="closeModal">
-          <SquareX :size="20" style="margin-right: 10px" />
-          <span>Stäng</span>
-        </button>
-      </div>
-    </div>
+    <ReceiptList @show-receipt="showReceipt" />
+
+    <ReceiptImageModal
+      :open="modalOpen"
+      :img="modalImg"
+      :error="modalError"
+      @close="closeModal"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useAuthStore } from '../store/authStore'
-import { Upload, ReceiptText, SquareX, Trash2 } from '@lucide/vue'
-import { onMounted } from 'vue'
+import { Upload } from '@lucide/vue'
 import { fetchReceipts } from '../utils/fetchReceipts'
 import { useRouter } from 'vue-router'
-import { storeToRefs } from 'pinia'
 import { useReceiptsStore } from '../store/receiptsStore'
+import ReceiptList from '../components/ReceiptList.vue'
+import ReceiptImageModal from '../components/ReceiptImageModal.vue'
 
 const authStore = useAuthStore()
+const router = useRouter()
+const receiptsStore = useReceiptsStore()
 
-// Kör fetchReceipts när token är satt
 watch(
   () => authStore.token,
   (token) => {
-    if (token) {
-      import('../utils/fetchReceipts').then((mod) => mod.fetchReceipts())
-    }
+    if (token) fetchReceipts()
   },
   { immediate: true }
 )
+
+onMounted(() => {
+  if (!receiptsStore.loaded) {
+    receiptsStore.loadFromStorage()
+    if (!receiptsStore.loaded) {
+      fetchReceipts()
+    }
+  }
+})
 
 function logout() {
   authStore.clearToken()
   router.push('/login')
 }
+
+function goToUpload() {
+  router.push('/upload')
+}
+
 const modalOpen = ref(false)
 const modalImg = ref<string | null>(null)
 const modalError = ref<string | null>(null)
-const router = useRouter()
-const receiptsStore = useReceiptsStore()
-const { receipts, loaded } = storeToRefs(receiptsStore)
 
 async function showReceipt(id: number) {
   modalOpen.value = true
@@ -206,134 +87,14 @@ async function showReceipt(id: number) {
     modalImg.value = null
   }
 }
+
 function closeModal() {
   modalOpen.value = false
   modalImg.value = null
 }
-
-function goToUpload() {
-  router.push('/upload')
-}
-
-onMounted(() => {
-  if (!loaded.value) {
-    receiptsStore.loadFromStorage()
-    if (!receiptsStore.loaded) {
-      fetchReceipts()
-    }
-  }
-})
-
-function formatDate(dateStr: string) {
-  const d = new Date(dateStr)
-  return d
-    .toLocaleString('sv-SE', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    })
-    .replace(/\./g, '-')
-    .replace(',', '')
-}
-
-const deleteModalOpen = ref(false)
-const deleteTargetId = ref<number | null>(null)
-
-function openDeleteModal(id: number) {
-  deleteTargetId.value = id
-  deleteModalOpen.value = true
-}
-
-function closeDeleteModal() {
-  deleteModalOpen.value = false
-  deleteTargetId.value = null
-}
-
-async function confirmDeleteReceipt() {
-  if (!deleteTargetId.value) return
-  try {
-    const res = await fetch(`/api/delete-receipt?id=${deleteTargetId.value}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${authStore.token}`,
-      },
-    })
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}))
-      alert(data.error || 'Kunde inte ta bort kvittot.')
-      return
-    }
-    receiptsStore.removeReceipt(deleteTargetId.value)
-    closeDeleteModal()
-  } catch (e) {
-    alert('Fel vid borttagning av kvitto.')
-  }
-}
 </script>
 
-<style lang="scss" scoped>
-// Modal covers entire screen and centers content
-.modal-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  max-width: none;
-  max-height: none;
-  border-radius: 0;
-  padding: 0;
-  margin: 0;
-  background: rgba(24, 28, 34, 0.97);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.modal-img-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  max-width: 95vw;
-  max-height: 95vh;
-  width: 100%;
-  height: 100%;
-}
-.modal-img {
-  max-width: 90vw;
-  max-height: 80vh;
-  border-radius: 14px;
-  box-shadow: 0 4px 32px rgba(0, 0, 0, 0.25);
-}
-.modal-loader {
-  color: #fff;
-  font-size: 1.2rem;
-  padding: 2rem;
-}
-.modal-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: 1.5rem;
-  background: #222;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.7rem 2.2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  transition: background 0.2s;
-}
-.modal-close:hover {
-  background: #444;
-}
+<style scoped lang="scss">
 body,
 html {
   margin: 0;
@@ -360,29 +121,9 @@ html {
 }
 .home-view::before {
   content: '';
-  position: absolute;
-  top: -20vw;
-  left: -20vw;
-  width: 80px;
-  max-width: 80px;
-  min-width: 60px;
-  height: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 auto;
-  padding: 2.5rem 1rem 1.5rem 1rem;
-  width: 100vw;
-  min-height: 100vh;
-  height: 100vh;
-  box-sizing: border-box;
-  background: #181c22;
-  color: #fff;
-  overflow: hidden;
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 0;
   right: -25vw;
   width: 70vw;
   height: 70vw;
@@ -395,49 +136,7 @@ html {
   filter: blur(60px) brightness(1.1);
   opacity: 0.25;
   z-index: 0;
-}
-.receipts-list {
-  width: 100%;
-  max-width: 420px;
-  background: transparent;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
-  margin-bottom: 2rem;
-}
-.receipts-list h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  color: #fff;
-  text-align: center;
-  font-weight: 600;
-}
-.receipts-list ul {
-  /* max-height sätts dynamiskt med calc för att ta hänsyn till knapp och rubrik */
-  max-height: calc(100vh - 220px);
-  overflow-y: auto;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.receipts-list li {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  margin-bottom: 0.7rem;
-  padding: 0.85rem 1rem;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 1.08rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-}
-
-.receipts-header {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.2rem;
+  pointer-events: none;
 }
 .main-btn {
   background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
@@ -451,15 +150,11 @@ html {
   margin-top: 1.2rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   transition: background 0.2s;
+  &:hover {
+    background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
+  }
 }
-.main-btn:hover {
-  background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
-}
-
 .logout-btn {
-  position: relative;
-  top: 0px;
-  right: 0px;
   width: fit-content;
   height: 25px;
   background: #e74c3c;
