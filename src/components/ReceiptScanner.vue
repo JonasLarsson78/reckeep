@@ -42,12 +42,19 @@
         <span v-if="!imageFile"> Välj eller ta bild</span>
         <span v-else>Byt bild</span>
       </button>
+
+      <!-- Cropper visas om bild är vald och inte uppladdad -->
       <div v-if="imageUrl && !uploadSuccess" class="image-preview-wrapper">
         <template v-if="!loading">
-          <img
+          <advanced-cropper
+            v-if="imageUrl"
             :src="imageUrl"
-            alt="Kvitto preview"
-            class="receipt-image"
+            :autoZoom="true"
+            :stencil-component="RectangleStencil"
+            imageRestriction="fit-area"
+            :defaultBoundaries="'fit'"
+            @change="onCropChange"
+            class="receipt-cropper"
           />
         </template>
         <template v-else>
@@ -73,21 +80,24 @@
 </template>
 
 <script setup lang="ts">
-
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowLeft, Camera } from '@lucide/vue'
+import {
+  Cropper as AdvancedCropper,
+  RectangleStencil,
+} from 'vue-advanced-cropper'
+import 'vue-advanced-cropper/dist/style.css'
 
 const router = useRouter()
-
 const emit = defineEmits(['image-selected'])
-
 const imageFile = ref<File | null>(null)
 const imageUrl = ref<string | null>(null)
 const loading = ref(false)
 const uploadSuccess = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 const receiptName = ref('')
+const cropData = ref<any>(null)
 
 function triggerFileInput() {
   fileInput.value?.click()
@@ -103,31 +113,55 @@ function onFileChange(e: Event) {
   if (target.files && target.files[0]) {
     imageFile.value = target.files[0]
     imageUrl.value = URL.createObjectURL(target.files[0])
+    cropData.value = null
   }
 }
 
-
+function onCropChange({ coordinates, canvas }: any) {
+  cropData.value = { coordinates, canvas }
+}
 
 async function emitImage() {
   if (imageFile.value && receiptName.value.trim()) {
     loading.value = true
+    let fileToSend = imageFile.value
+    // Om användaren har croppat, använd croppad bild
+    if (cropData.value && cropData.value.canvas) {
+      const blob = await new Promise<Blob | null>((resolve) =>
+        cropData.value.canvas.toBlob(resolve, 'image/jpeg')
+      )
+      if (blob) {
+        fileToSend = new File([blob], imageFile.value.name, {
+          type: 'image/jpeg',
+        })
+      }
+    }
     emit('image-selected', {
-      file: imageFile.value,
+      file: fileToSend,
       name: receiptName.value,
     })
-    // Vänta på att HomeView hanterar uppladdning, simulera delay för loader
     setTimeout(() => {
       loading.value = false
       uploadSuccess.value = true
       imageFile.value = null
       imageUrl.value = null
       receiptName.value = ''
+      cropData.value = null
     }, 2000)
   }
 }
 </script>
 
 <style scoped lang="scss">
+.receipt-cropper {
+  width: 100%;
+  max-width: 400px;
+  height: 300px;
+  margin: 0 auto 1rem auto;
+  background: #222;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
 .success-message {
   color: #4caf50;
   background: rgba(76, 175, 80, 0.08);
